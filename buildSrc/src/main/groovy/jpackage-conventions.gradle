@@ -1,11 +1,11 @@
 def JavaFXversion = '21.0.1'
 def jmodsDir = new File("$rootDir/jmods")
 
-task cleanJMods(type:Delete)
+tasks.register('cleanJMods', Delete)
 {
     delete "$rootDir/jmods"
 }
-task downloadJMods()
+tasks.register('downloadJMods')
 {
     doLast {
         def filename = "openjfx-${JavaFXversion}_windows-x64_bin-jmods.zip"
@@ -23,12 +23,13 @@ task downloadJMods()
     }
 }
 
-task cleanJlink(type: Delete) {
+tasks.register('cleanJlink', Delete) {
     description 'Cleans the app image created by jlink task'
     delete "${buildDir}/image"
 }
 clean.dependsOn cleanJlink
-task jlink(type: Exec, dependsOn: jar, group: 'Distribution') {
+tasks.register('jlink', Exec) {
+    dependsOn jar
     description 'Build an executable'
     dependsOn cleanJlink
     dependsOn downloadJMods
@@ -36,13 +37,13 @@ task jlink(type: Exec, dependsOn: jar, group: 'Distribution') {
     def dependentProjects = projectDependencies*.dependencyProject
     def dependentProjectsWithJars = dependentProjects.findAll { it.hasProperty('jar') }
     def dependentProjectJarFiles = dependentProjectsWithJars.collect { it.jar.destinationDirectory.asFile.get() }
-    def dependentProjectLibPaths = dependentProjectsWithJars.collect { it.repositories.collect { it.dirs.collect { it as String }}}.flatten().findAll { it.contains('main') && !it.contains('codeCoverageReport') }
-    commandLine System.properties['java.home']+'/bin/jlink',
-            '--module-path', System.properties['java.home']+'/jmods'+ ';' \
-                             + (jar.destinationDirectory.asFile.get() as String) + ';' \
-                             + jmodsDir + ';' \
-                             + dependentProjectJarFiles.join(';') + ';' \
-                             + dependentProjectLibPaths.join(';'),
+    def dependentProjectLibPaths = dependentProjectsWithJars.collect { it.repositories.collect { it.dirs.collect { it as String } } }.flatten().findAll { it.contains('main') && !it.contains('codeCoverageReport') }
+    commandLine System.properties['java.home'] + '/bin/jlink',
+            '--module-path', System.properties['java.home'] + '/jmods' + ';' \
+                              + (jar.destinationDirectory.asFile.get() as String) + ';' \
+                              + jmodsDir + ';' \
+                              + dependentProjectJarFiles.join(';') + ';' \
+                              + dependentProjectLibPaths.join(';'),
             '--add-modules', 'app',
             '--output', "${buildDir}/image",
             '--bind-services',
@@ -51,29 +52,30 @@ task jlink(type: Exec, dependsOn: jar, group: 'Distribution') {
             '--no-header-files'
 }
 
-task cleanJpackage(type: Delete) {
+tasks.register('cleanJpackage', Delete) {
     description 'Cleans the app image created by jpackage task'
     delete "${buildDir}/app-image"
     delete "${buildDir}/tmp/jpackage"
 }
 clean.dependsOn cleanJpackage
-task jpackage(type: Exec, dependsOn: jar, group: 'Distribution') {
+tasks.register('jpackage', Exec) {
+    dependsOn jar
     description 'Build an installation package'
     dependsOn cleanJpackage
     dependsOn downloadJMods
     def projectDependencies = project.configurations.runtimeClasspath.getAllDependencies().withType(ProjectDependency)
     def dependentProjectsWithJars = projectDependencies.findAll { it.hasProperty('jar') }
     def dependentProjectJarFiles = dependentProjectsWithJars.collect { it.jar.destinationDirectory.asFile.get() }
-    def dependentProjectLibPaths = dependentProjectsWithJars.collect { it.repositories.collect { it.dirs.collect { it as String }}}.flatten().findAll { it.contains('main') && !it.contains('codeCoverageReport') }
-    commandLine System.properties['java.home']+'/bin/jpackage',
+    def dependentProjectLibPaths = dependentProjectsWithJars.collect { it.repositories.collect { it.dirs.collect { it as String } } }.flatten().findAll { it.contains('main') && !it.contains('codeCoverageReport') }
+    commandLine System.properties['java.home'] + '/bin/jpackage',
             '--name', 'Template-JavaFX',
             '--temp', "${buildDir}/tmp/jpackage",
             '--module', 'app',
-            '--module-path', System.properties['java.home']+'/jmods'+ ';' \
-                             + (jar.destinationDirectory.asFile.get() as String) + ';' \
-                             + jmodsDir + ';' \
-                             + dependentProjectJarFiles.join(';') + ';' \
-                             + dependentProjectLibPaths.join(';'),
+            '--module-path', System.properties['java.home'] + '/jmods' + ';' \
+                              + (jar.destinationDirectory.asFile.get() as String) + ';' \
+                              + jmodsDir + ';' \
+                              + dependentProjectJarFiles.join(';') + ';' \
+                              + dependentProjectLibPaths.join(';'),
             '--input', jar.destinationDirectory.asFile.get() as String,
             '--jlink-options', '--bind-services --strip-native-commands --strip-debug --no-man-pages --no-header-files',
             '--java-options', '-Xmx100m',

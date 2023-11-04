@@ -2,20 +2,18 @@ plugins {
     id 'java'
 }
 
-sourceCompatibility = 21
-targetCompatibility = 21
-
 java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
     modularity.inferModulePath = true
 }
 
-tasks.withType(JavaCompile) {
-    //TBD: spotbugs problem with '-Werror' and also requires
-    //TBD: Need '-Xlint:-requires-automatic' ?
-    options.compilerArgs.addAll([ '-Xlint:all', '-Xlint:-missing-explicit-ctor', '-Werror'])
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll(['-Xlint:all', '-Xlint:-missing-explicit-ctor', '-Werror'])
 }
 
 // Hide 'init' and 'wrapper' tasks in "gradle tasks" output,
@@ -29,11 +27,12 @@ subprojects {
 // Javadoc
 //
 javadoc.enabled = false
-task cleanAllJavadoc(type: Delete, group: 'Build') {
+def javadocOutput = layout.buildDirectory.dir("javadoc")
+tasks.register('cleanAllJavadoc', Delete) {
     description = 'Cleans unified javadoc outputs'
-    delete "${buildDir}/javadoc"
+    delete javadocOutput.map { it.asFile.path }
 }
-task allJavadoc(type: Javadoc, group: 'Documentation') {
+tasks.register('allJavadoc', Javadoc) {
     description = 'Generates a global javadoc from all the modules'
     title = 'Template Project Documentation'
     failOnError = true
@@ -41,10 +40,8 @@ task allJavadoc(type: Javadoc, group: 'Documentation') {
     def projectsToDocument = [
             project(':app')
     ]
-    dependsOn projectsToDocument.collect { project -> project.getTasksByName('classes', true)}
-    source projectsToDocument.collect {[it.sourceSets.main.java]}
-    //exclude '**/module-info.java'
-    exclude '**/customSpotbugs'
+    dependsOn projectsToDocument.collect { project -> project.getTasksByName('classes', true) }
+    source projectsToDocument.collect { [it.sourceSets.main.java] }
     classpath = files(projectsToDocument.collect { it.sourceSets.main.compileClasspath })
     destinationDir = file("${buildDir}/docs/javadoc")
     options.links 'https://docs.oracle.com/en/java/javase/21/docs/api/'
@@ -70,7 +67,8 @@ task allJavadoc(type: Javadoc, group: 'Documentation') {
     }
 }
 
-task showAllJavadoc(type: BrowserLaunch, group: 'Documentation', dependsOn: allJavadoc) {
+tasks.register('showAllJavadoc', BrowserLaunch) {
+    dependsOn allJavadoc
     description = 'Launch default browser on the unified javadoc output index page'
     htmlFilePath = "${buildDir}/docs/javadoc/index.html"
 }
