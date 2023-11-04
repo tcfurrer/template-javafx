@@ -27,11 +27,10 @@ subprojects {
 // Javadoc
 //
 javadoc.enabled = false
-def javadocOutput = layout.buildDirectory.dir("javadoc")
-def javadocDist = layout.buildDirectory.dir("docs/javadoc")
 tasks.register('cleanAllJavadoc', Delete) {
     description = 'Cleans unified javadoc outputs'
-    delete javadocOutput.map{ it.asFile.path }
+    delete layout.buildDirectory.get().asFile.path+"/javadoc" as File
+    delete layout.buildDirectory.get().asFile.path+"/docs" as File
 }
 tasks.register('allJavadoc', Javadoc) {
     description = 'Generates a global javadoc from all the modules'
@@ -44,7 +43,7 @@ tasks.register('allJavadoc', Javadoc) {
     dependsOn projectsToDocument.collect { project -> project.getTasksByName('classes', true) }
     source projectsToDocument.collect { [it.sourceSets.main.java] }
     classpath = files(projectsToDocument.collect { it.sourceSets.main.compileClasspath })
-    destinationDir = javadocDist.map{ it.asFile.path }
+    destinationDir = layout.buildDirectory.get().asFile.path+"/docs/javadoc" as File
     options.links 'https://docs.oracle.com/en/java/javase/21/docs/api/'
     options.addStringOption('-module-source-path', './*/src/main/java/')
     options.addStringOption('-show-packages', 'all')
@@ -62,7 +61,7 @@ tasks.register('allJavadoc', Javadoc) {
         projectsToDocument.each { p ->
             copy {
                 from "${p.projectDir}/src/main/docs"
-                into javadocOutput.map{ it.asFile.path }+"${p.name}"
+                into layout.buildDirectory.get().asFile.path+"/javadoc/${p.name}" as File
             }
         }
     }
@@ -71,5 +70,5 @@ tasks.register('allJavadoc', Javadoc) {
 tasks.register('showAllJavadoc', BrowserLaunch) {
     dependsOn allJavadoc
     description = 'Launch default browser on the unified javadoc output index page'
-    htmlFilePath = javadocDist.map{ it.asFile.path }+"/index.html"
+    htmlFilePath = layout.buildDirectory.get().asFile.path+"/docs/javadoc/index.html"
 }
