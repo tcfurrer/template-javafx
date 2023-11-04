@@ -3,7 +3,7 @@ def jmodsDir = new File(layout.buildDirectory.get().asFile.path+"/jmods")
 
 tasks.register('cleanJMods', Delete)
 {
-    delete "$rootDir/jmods"
+    delete jmodsDir
 }
 tasks.register('downloadJMods')
 {
@@ -75,7 +75,7 @@ tasks.register('jpackage', Exec) {
             '--module', 'app',
             '--module-path', System.properties['java.home'] + '/jmods' + ';' \
                               + (jar.destinationDirectory.asFile.get() as String) + ';' \
-                              + jmodsDir + ';' \
+                              + jmodsDir + "/javafx-jmods-${JavaFXversion}" + ';' \
                               + dependentProjectJarFiles.join(';') + ';' \
                               + dependentProjectLibPaths.join(';'),
             '--input', jar.destinationDirectory.asFile.get() as String,
