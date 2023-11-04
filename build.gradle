@@ -1,5 +1,4 @@
 plugins {
-    id 'java-conventions'
-    id 'javafx-conventions'
-    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'base'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
