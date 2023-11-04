@@ -3,6 +3,7 @@ tasks.register('cleanAllJavadoc', Delete) {
     delete layout.buildDirectory.get().asFile.path+"/javadoc" as File
     delete layout.buildDirectory.get().asFile.path+"/docs" as File
 }
+clean.dependsOn cleanAllJavadoc
 tasks.register('allJavadoc', Javadoc) {
     description = 'Generates a global javadoc from all the modules'
     title = 'Template JavaFX Project Documentation'

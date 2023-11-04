@@ -27,9 +27,11 @@ tasks.register('downloadJMods')
 
 tasks.register('cleanJlink', Delete) {
     description 'Cleans the app image created by jlink task'
-    doLast {
-        ant.attrib(readonly: false) {
-            fileset(dir: layout.buildDirectory.get().asFile.path + "/image")
+    doFirst {
+        if (file(layout.buildDirectory.get().asFile.path + "/image").exists()) {
+            ant.attrib(readonly: false) {
+                fileset(dir: layout.buildDirectory.get().asFile.path + "/image")
+            }
         }
         delete layout.buildDirectory.get().asFile.path + "/image"
     }
@@ -61,10 +63,12 @@ tasks.register('jlink', Exec) {
 
 tasks.register('cleanJpackage', Delete) {
     description 'Cleans the app image created by jpackage task'
-    doLast {
+    doFirst {
         delete layout.buildDirectory.get().asFile.path + "/app-image"
-        ant.attrib(readonly: false) {
-            fileset(dir: layout.buildDirectory.get().asFile.path + "/tmp/jpackage")
+        if (file(layout.buildDirectory.get().asFile.path + "/tmp/jpackage").exists()) {
+            ant.attrib(readonly: false) {
+                fileset(dir: layout.buildDirectory.get().asFile.path + "/tmp/jpackage")
+            }
         }
         delete layout.buildDirectory.get().asFile.path + "/tmp/jpackage"
     }
@@ -113,6 +117,7 @@ tasks.register('jpackage', Exec) {
     // '--win-update-url', 'TBD-url'
 
     doFirst {
+        println "Generating application installable..."
         mkdir layout.buildDirectory.get().asFile.path+"/tmp/jpackage"
     }
 }

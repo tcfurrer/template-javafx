@@ -3,7 +3,3 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'javadoc-aggregation-conventions'
 }
-
-tasks.register('Clean') {
-    dependsOn 'app::clean'
-}
