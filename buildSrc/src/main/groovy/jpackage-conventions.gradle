@@ -1,5 +1,5 @@
 def JavaFXversion = '21.0.1'
-def jmodsDir = new File("$rootDir/jmods")
+def jmodsDir = new File(layout.buildDirectory.get().asFile.path+"/jmods")
 
 tasks.register('cleanJMods', Delete)
 {
