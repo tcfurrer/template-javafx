@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+}
+
+sourceCompatibility = 21
+targetCompatibility = 21
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    modularity.inferModulePath = true
+}
+
+tasks.withType(JavaCompile) {
+    //TBD: spotbugs problem with '-Werror' and also requires
+    //TBD: Need '-Xlint:-requires-automatic' ?
+    options.compilerArgs.addAll([ '-Xlint:all', '-Xlint:-missing-explicit-ctor', '-Werror'])
+}
+
+// Hide 'init' and 'wrapper' tasks in "gradle tasks" output,
+// since we don't expect anyone to run them.
+subprojects {
+    init.group = null
+    wrapper.group = null
+}
+
+//
+// Javadoc
+//
+javadoc.enabled = false
+task cleanAllJavadoc(type: Delete, group: 'Build') {
+    description = 'Cleans unified javadoc outputs'
+    delete "${buildDir}/javadoc"
+}
+task allJavadoc(type: Javadoc, group: 'Documentation') {
+    description = 'Generates a global javadoc from all the modules'
+    title = 'Template Project Documentation'
+    failOnError = true
+    // TODO: distribute this, instead of hardcoding list here
+    def projectsToDocument = [
+            project(':app')
+    ]
+    dependsOn projectsToDocument.collect { project -> project.getTasksByName('classes', true)}
+    source projectsToDocument.collect {[it.sourceSets.main.java]}
+    //exclude '**/module-info.java'
+    exclude '**/customSpotbugs'
+    classpath = files(projectsToDocument.collect { it.sourceSets.main.compileClasspath })
+    destinationDir = file("${buildDir}/docs/javadoc")
+    options.links 'https://docs.oracle.com/en/java/javase/21/docs/api/'
+    options.addStringOption('-module-source-path', './*/src/main/java/')
+    options.addStringOption('-show-packages', 'all')
+    options.addStringOption('-show-module-contents', 'all')
+    options.addStringOption('-show-types', 'public')
+    options.addStringOption('-show-members', 'public')
+    options.addBooleanOption('Xdoclint:-missing', true)
+    options.addBooleanOption('Werror', true)
+    options.addBooleanOption('javafx', true)
+    options.addBooleanOption('html5', true)
+    options.addBooleanOption('use', true)
+    options.addStringOption('link', 'https://docs.oracle.com/en/java/javase/21/docs/api/')
+
+    doLast {
+        projectsToDocument.each { p ->
+            copy {
+                from "${p.projectDir}/src/main/docs"
+                into "${buildDir}/javadoc/${p.name}"
+            }
+        }
+    }
+}
+
+task showAllJavadoc(type: BrowserLaunch, group: 'Documentation', dependsOn: allJavadoc) {
+    description = 'Launch default browser on the unified javadoc output index page'
+    htmlFilePath = "${buildDir}/docs/javadoc/index.html"
+}
