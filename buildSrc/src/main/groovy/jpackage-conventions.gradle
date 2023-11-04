@@ -11,6 +11,8 @@ tasks.register('downloadJMods')
         def filename = "openjfx-${JavaFXversion}_windows-x64_bin-jmods.zip"
         def zipFile = new File("${jmodsDir}/${filename}")
         if (!jmodsDir.exists()) {
+            jmodsDir.mkdirs()
+            println "Downloading JavaFX jmods..."
             new URI("https://download2.gluonhq.com/openjfx/${JavaFXversion}/${filename}")
                     .toURL()
                     .withInputStream{ i -> zipFile.withOutputStream{ it << i }}
