@@ -12,7 +12,9 @@ out
 jmod
 
 # IDEA
+.idea/workspace.xml
 .idea/jarRepositories.xml
+**/*.iml
 
 # Emacs litter
 *~
