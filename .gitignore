@@ -9,7 +9,7 @@ gradle-app.setting
 out
 
 # Auto-downloaded jmods
-jmod
+jmods
 
 # IDEA
 .idea/workspace.xml
