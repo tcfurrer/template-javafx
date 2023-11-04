@@ -8,26 +8,26 @@ tasks.register('cleanJMods', Delete)
 tasks.register('downloadJMods')
 {
     doLast {
-        def filename = "openjfx-${JavaFXversion}_windows-x64_bin-jmods.zip"
-        def zipFile = new File("${jmodsDir}/${filename}")
         if (!jmodsDir.exists()) {
+            def filename = "openjfx-${JavaFXversion}_windows-x64_bin-jmods.zip"
+            def zipFile = new File("${jmodsDir}/${filename}")
             jmodsDir.mkdirs()
             println "Downloading JavaFX jmods..."
             new URI("https://download2.gluonhq.com/openjfx/${JavaFXversion}/${filename}")
                     .toURL()
                     .withInputStream{ i -> zipFile.withOutputStream{ it << i }}
+            copy {
+                from zipTree(zipFile)
+                into jmodsDir
+            }
+            delete zipFile
         }
-        copy {
-            from zipTree(zipFile)
-            into jmodsDir
-        }
-        delete zipFile
     }
 }
 
 tasks.register('cleanJlink', Delete) {
     description 'Cleans the app image created by jlink task'
-    delete "${buildDir}/image"
+    delete layout.buildDirectory.get().asFile.path+"/image"
 }
 clean.dependsOn cleanJlink
 tasks.register('jlink', Exec) {
@@ -47,7 +47,7 @@ tasks.register('jlink', Exec) {
                               + dependentProjectJarFiles.join(';') + ';' \
                               + dependentProjectLibPaths.join(';'),
             '--add-modules', 'app',
-            '--output', "${buildDir}/image",
+            '--output', layout.buildDirectory.get().asFile.path+"/image",
             '--bind-services',
             '--strip-debug',
             '--no-man-pages',
@@ -56,8 +56,8 @@ tasks.register('jlink', Exec) {
 
 tasks.register('cleanJpackage', Delete) {
     description 'Cleans the app image created by jpackage task'
-    delete "${buildDir}/app-image"
-    delete "${buildDir}/tmp/jpackage"
+    delete layout.buildDirectory.get().asFile.path+"/app-image"
+    delete layout.buildDirectory.get().asFile.path+"/tmp/jpackage"
 }
 clean.dependsOn cleanJpackage
 tasks.register('jpackage', Exec) {
@@ -71,7 +71,7 @@ tasks.register('jpackage', Exec) {
     def dependentProjectLibPaths = dependentProjectsWithJars.collect { it.repositories.collect { it.dirs.collect { it as String } } }.flatten().findAll { it.contains('main') && !it.contains('codeCoverageReport') }
     commandLine System.properties['java.home'] + '/bin/jpackage',
             '--name', 'Template-JavaFX',
-            '--temp', "${buildDir}/tmp/jpackage",
+            '--temp', layout.buildDirectory.get().asFile.path+"/tmp/jpackage",
             '--module', 'app',
             '--module-path', System.properties['java.home'] + '/jmods' + ';' \
                               + (jar.destinationDirectory.asFile.get() as String) + ';' \
@@ -81,7 +81,7 @@ tasks.register('jpackage', Exec) {
             '--input', jar.destinationDirectory.asFile.get() as String,
             '--jlink-options', '--bind-services --strip-native-commands --strip-debug --no-man-pages --no-header-files',
             '--java-options', '-Xmx100m',
-            '--dest', "${buildDir}/app-image",
+            '--dest', layout.buildDirectory.get().asFile.path+"/app-image",
             '--description', 'Template JavaFX Project',
             //'--about-url', 'TBD-url',
             //'--file-associations', 'TBD',
@@ -102,6 +102,6 @@ tasks.register('jpackage', Exec) {
     // '--win-update-url', 'TBD-url'
 
     doFirst {
-        mkdir "${buildDir}/tmp/jpackage"
+        mkdir layout.buildDirectory.get().asFile.path+"/tmp/jpackage"
     }
 }
